@@ -10,15 +10,6 @@ Se encarga de:
 - Guardar contactos en una base de datos local (**SQLite**).
 - Consultar eventos próximos de Google Calendar.
 - Exponer endpoints para que el **frontend** pueda consumir toda la información.
-
----
-
-## 👨‍💻 Authors
-1. Patricio Peña  
-2. Wilbert Manzur  
-3. Martin Cuevas  
-4. Diego Burgos  
-
 ---
 
 ## 📌 Project Setup (Backend)

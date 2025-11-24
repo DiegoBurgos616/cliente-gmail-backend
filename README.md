@@ -32,7 +32,7 @@ cd /ruta/donde/quieras/guardar
 Clona el repositorio del backend:
 
 sh
-Copiar código
+
 git clone https://github.com/DiegoBurgos616/cliente-gmail-backend.git
 cd cliente-gmail-backend
 2️⃣ Instalar dependencias
@@ -40,7 +40,7 @@ Asegúrate de tener Node.js instalado (versión 18+ recomendada).
 Luego ejecuta:
 
 sh
-Copiar código
+
 npm install
 Esto instalará, entre otros:
 
@@ -62,12 +62,12 @@ nodemon
 Crea un archivo .env en la raíz del backend (misma carpeta donde está server.js):
 
 sh
-Copiar código
+
 touch .env
 Ejemplo de contenido mínimo:
 
 env
-Copiar código
+
 # Puerto donde correrá el backend
 PORT=3000
 
@@ -97,17 +97,17 @@ La base de datos app.db se creará automáticamente al ejecutar el servidor (usa
 Dentro de la carpeta del backend:
 
 sh
-Copiar código
+
 node server.js
 Si todo sale bien, verás algo similar en la terminal:
 
 sh
-Copiar código
+
 Servidor escuchando en http://localhost:3000
 También puedes usar nodemon para desarrollo:
 
 sh
-Copiar código
+
 npx nodemon server.js
 5️⃣ Flujo básico de uso (Backend)
 Levanta el backend con node server.js.
@@ -115,7 +115,7 @@ Levanta el backend con node server.js.
 Desde el navegador o el frontend, se llamará a la ruta:
 
 txt
-Copiar código
+
 http://localhost:3000/gmail/connect
 para iniciar sesión con Google (OAuth).
 

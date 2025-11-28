@@ -1,14 +1,24 @@
 // backend/routes/auth.routes.js
 const express = require("express");
 const { google } = require("googleapis");
-const { oauth2Client } = require("../config/googleClient");
+const { oauth2Client, hasGoogleTokens } = require("../config/googleClient");
 const { db } = require("../config/db");
 
 const router = express.Router();
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5500";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5500/";
 
+// ================================
+// Estado de autenticación con Google
+// ================================
+router.get("/auth/status", (req, res) => {
+  const authenticated = hasGoogleTokens();
+  return res.json({ authenticated });
+});
+
+// ================================
 // Iniciar conexión manualmente: /gmail/connect
+// ================================
 router.get("/gmail/connect", (req, res) => {
   const scopes = [
     "https://www.googleapis.com/auth/gmail.readonly",
@@ -22,41 +32,53 @@ router.get("/gmail/connect", (req, res) => {
     prompt: "consent",
   });
 
-  res.redirect(url);
+  return res.redirect(url);
 });
 
-// Callback de Google
+// ================================
+// Callback de Google OAuth
+// ================================
 router.get("/gmail/callback", async (req, res) => {
+  const code = req.query.code;
+
+  if (!code) {
+    return res.status(400).send("Falta el parámetro 'code' en la URL.");
+  }
+
   try {
-    const code = req.query.code;
+    // Intercambiamos el code por tokens
     const { tokens } = await oauth2Client.getToken(code);
-    console.log("TOKENS OBTENIDOS:", tokens);
-
-    process.env.ACCESS_TOKEN = tokens.access_token || "";
-    process.env.REFRESH_TOKEN = tokens.refresh_token || "";
-
     oauth2Client.setCredentials(tokens);
 
+    // Guardamos tokens en variables de entorno (simple para proyecto escolar)
+    process.env.ACCESS_TOKEN = tokens.access_token || "";
+    if (tokens.refresh_token) {
+      process.env.REFRESH_TOKEN = tokens.refresh_token;
+    }
+
+    // Obtenemos el correo principal de la cuenta de Gmail
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
-    const profile = await gmail.users.getProfile({ userId: "me" });
-    const emailAddress = profile.data.emailAddress;
-    console.log("Cuenta principal de Gmail:", emailAddress);
+    const profileResponse = await gmail.users.getProfile({ userId: "me" });
+    const primaryEmail = profileResponse.data.emailAddress;
 
-    process.env.PRIMARY_EMAIL = emailAddress;
+    process.env.PRIMARY_EMAIL = primaryEmail;
 
-    db.prepare(
-      "INSERT INTO users (email) VALUES (?) ON CONFLICT(email) DO NOTHING"
-    ).run(emailAddress);
+    // Registramos (o aseguramos) el usuario en la BD
+    db.prepare("INSERT OR IGNORE INTO users (email) VALUES (?)").run(primaryEmail);
 
-    // Redirigimos al frontend (no al backend raíz)
+    console.log("✅ Sesión iniciada con Google para:", primaryEmail);
+
+    // Redirigimos de vuelta al front
     return res.redirect(FRONTEND_URL);
   } catch (err) {
-    console.error("Error en /gmail/callback", err);
-    res.status(500).send("Error al conectar con Gmail/Calendar");
+    console.error("Error en /gmail/callback:", err);
+    return res.status(500).send("Error al procesar la autenticación de Google.");
   }
 });
 
+// ================================
 // LOGOUT
+// ================================
 router.get("/logout", (req, res) => {
   console.log("Cerrando sesión…");
   process.env.ACCESS_TOKEN = "";
@@ -68,4 +90,3 @@ router.get("/logout", (req, res) => {
 });
 
 module.exports = router;
-

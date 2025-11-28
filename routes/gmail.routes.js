@@ -65,7 +65,7 @@ router.get("/gmail/messages", async (req, res) => {
 
       // Lógica profesor + n8n
       if (userId) {
-        const senderEmail = extractEmail(fromHeader);
+const senderEmail = extractEmail(fromHeader).toLowerCase();
         console.log("📨 Mensaje de:", senderEmail, "subject:", subject);
 
         const contact = db
